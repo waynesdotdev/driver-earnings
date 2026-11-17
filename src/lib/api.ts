@@ -1,0 +1,34 @@
+"use client";
+
+import type { Day, MonthSummary } from "./types";
+import type { PlatformId } from "./platforms";
+
+async function req<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...init,
+    headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+    cache: "no-store",
+  });
+  if (res.status === 401) {
+    window.location.href = "/login";
+    throw new Error("unauthorised");
+  }
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? `HTTP ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export const api = {
+  active: () => req<{ active: Day | null }>("/api/active"),
+  day: (date: string) => req<{ day: Day }>(`/api/day/${date}`),
+  start: (date: string) => req<{ day: Day }>(`/api/day/${date}/start`, { method: "POST" }),
+  close: (date: string) => req<{ day: Day }>(`/api/day/${date}/close`, { method: "POST" }),
+  set: (date: string, platform: PlatformId, amount_pence: number | null) =>
+    req<{ day: Day }>(`/api/day/${date}`, { method: "PUT", body: JSON.stringify({ platform, amount_pence }) }),
+  range: (from: string, to: string) => req<{ days: Day[] }>(`/api/range?from=${from}&to=${to}`),
+  months: () => req<{ months: MonthSummary[] }>("/api/months"),
+  login: (pin: string) => req<{ ok: true }>("/api/login", { method: "POST", body: JSON.stringify({ pin }) }),
+  logout: () => req<{ ok: true }>("/api/logout", { method: "POST" }),
+};
