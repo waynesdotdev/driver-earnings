@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PLATFORMS, type Platform } from "@/lib/platforms";
+import { PLATFORMS, PLATFORM_IDS, isPlatform, type Platform, type PlatformId } from "@/lib/platforms";
 import { fmtMoney, parseMoney, penceToInput } from "@/lib/money";
 import { fmtTime } from "@/lib/dates";
 import { api } from "@/lib/api";
@@ -14,29 +14,115 @@ interface Props {
   confirmLabel?: string;
 }
 
+// Which apps are always shown. Stored per phone. Apps that aren't pinned
+// can still be added for a day with the "+ App" buttons.
+const PINNED_KEY = "de_pinned_apps";
+const DEFAULT_PINNED: PlatformId[] = ["ubereats", "deliveroo", "justeat"];
+
+function usePinned(): [PlatformId[], (ids: PlatformId[]) => void] {
+  const [pinned, setPinned] = useState<PlatformId[]>(DEFAULT_PINNED);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PINNED_KEY);
+      if (raw) setPinned((JSON.parse(raw) as unknown[]).filter(isPlatform));
+    } catch {}
+  }, []);
+  const save = (ids: PlatformId[]) => {
+    setPinned(ids);
+    localStorage.setItem(PINNED_KEY, JSON.stringify(ids));
+  };
+  return [pinned, save];
+}
+
 export default function EarningsEditor({ day, onChange, confirmLabel }: Props) {
-  const [editing, setEditing] = useState<string | null>(null);
+  const [editing, setEditing] = useState<PlatformId | null>(null);
+  const [added, setAdded] = useState<PlatformId[]>([]);
+  const [managing, setManaging] = useState(false);
+  const [pinned, setPinned] = usePinned();
+
+  // reset temporary add-ons when switching day
+  useEffect(() => setAdded([]), [day.date]);
+
+  // An app is shown if it's pinned, already has a figure today, or was just added.
+  const visible = PLATFORMS.filter((p) => pinned.includes(p.id) || day.earnings[p.id] || added.includes(p.id));
+  const hidden = PLATFORMS.filter((p) => !visible.includes(p));
+
+  function done(id: PlatformId) {
+    setEditing(null);
+    // drop a temporary add-on again if nothing was saved for it
+    if (!day.earnings[id]) setAdded((a) => a.filter((x) => x !== id));
+  }
 
   return (
     <div className="cards">
-      {PLATFORMS.map((p) => (
+      {visible.map((p) => (
         <PlatformCard
           key={p.id}
           platform={p}
           entry={day.earnings[p.id]}
           editing={editing === p.id}
           onEdit={() => setEditing(p.id)}
-          onDone={() => setEditing(null)}
+          onDone={() => done(p.id)}
           onSave={async (pence) => {
             if (confirmLabel && !window.confirm(`${confirmLabel}\n\nSave ${p.name} as ${pence === null ? "empty" : fmtMoney(pence)}?`)) {
               return false;
             }
             const res = await api.set(day.date, p.id, pence);
             onChange(res.day);
+            if (pence === null) setAdded((a) => a.filter((x) => x !== p.id));
             return true;
           }}
         />
       ))}
+
+      <div className="addons">
+        {hidden.map((p) => (
+          <button
+            key={p.id}
+            className="addon"
+            style={{ background: p.bg, color: p.fg }}
+            onClick={() => {
+              setAdded((a) => [...a, p.id]);
+              setEditing(p.id);
+            }}
+          >
+            + {p.name}
+          </button>
+        ))}
+        <button className="addon manage" onClick={() => setManaging((m) => !m)} aria-expanded={managing}>
+          ⚙ Apps
+        </button>
+      </div>
+
+      {managing && (
+        <div className="panel manage-panel">
+          <div className="row">
+            <h2 style={{ margin: 0 }}>Always show</h2>
+            <button className="small muted" onClick={() => setManaging(false)}>
+              Done
+            </button>
+          </div>
+          <p className="small muted" style={{ margin: "4px 0 6px" }}>
+            Turned-off apps hide away as “+” buttons. They still show on days you&apos;ve entered a figure.
+          </p>
+          {PLATFORMS.map((p) => {
+            const on = pinned.includes(p.id);
+            return (
+              <label key={p.id} className="toggle-row">
+                <span className="dot" style={{ background: p.bg, color: p.fg }}>
+                  {p.name}
+                </span>
+                <input
+                  type="checkbox"
+                  className="switch"
+                  checked={on}
+                  onChange={() => setPinned(on ? pinned.filter((x) => x !== p.id) : PLATFORM_IDS.filter((x) => x === p.id || pinned.includes(x)))}
+                />
+              </label>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -133,7 +219,9 @@ function PlatformCard({
           {saving ? "…" : "Save"}
         </button>
         <button type="button" className="btn-cancel" onClick={onDone} aria-label="Cancel">
-          ✕
+          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+            <path d="M3 3l12 12M15 3L3 15" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+          </svg>
         </button>
       </form>
       {err && <div className="edit-err">{err}</div>}

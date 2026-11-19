@@ -148,11 +148,15 @@ a {
   display: flex;
   gap: 8px;
   align-items: center;
+  margin: 0;
+  padding: 0;
 }
 .edit-row .money {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
+  margin: 0;
   background: rgba(255, 255, 255, 0.95);
   color: #111;
   border-radius: 12px;
@@ -167,6 +171,9 @@ a {
 .edit-row input {
   flex: 1;
   min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
   border: 0;
   outline: none;
   background: transparent;
@@ -175,13 +182,86 @@ a {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Optional apps ---------- */
+.addons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.addon {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 2px dashed rgba(255, 255, 255, 0.55);
+  background: var(--panel);
+  font-weight: 800;
+  font-size: 14px;
+}
+.addon.manage {
+  border: 1px solid var(--line);
+  color: var(--muted);
+  margin-left: auto;
+}
+.manage-panel {
+  margin-top: 0;
+}
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 2px;
+  border-top: 1px solid var(--line);
+}
+.toggle-row .dot {
+  font-size: 14px;
+  padding: 4px 10px;
+}
+.switch {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 50px;
+  height: 30px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.switch:checked {
+  background: var(--good);
+}
+.switch:checked::after {
+  transform: translateX(20px);
+}
 .btn-save,
 .btn-cancel {
   height: 52px;
+  margin: 0;
   border-radius: 12px;
   padding: 0 16px;
   font-weight: 800;
   font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .btn-save {
   background: #111;
@@ -189,7 +269,8 @@ a {
 }
 .btn-cancel {
   background: rgba(0, 0, 0, 0.25);
-  padding: 0 12px;
+  width: 52px;
+  padding: 0;
 }
 .edit-hint {
   font-size: 12px;
