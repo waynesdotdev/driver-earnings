@@ -13,7 +13,7 @@
       "binding": "DB",
       "database_name": "driver-earnings",
       // Replace with the id printed by: npx wrangler d1 create driver-earnings
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "fb1036f0-97e9-4777-8e8e-0c7e2041a2cc",
       "migrations_dir": "migrations"
     }
   ]
