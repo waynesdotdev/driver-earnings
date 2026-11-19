@@ -22,6 +22,7 @@ export default function TodayPage() {
   const [week, setWeek] = useState<Day[]>([]);
   const [busy, setBusy] = useState(false);
   const [today, setToday] = useState(todayLocal());
+  const [errMsg, setErrMsg] = useState("");
 
   const loadWeek = useCallback(async (date: string) => {
     const mon = mondayOf(date);
@@ -42,7 +43,8 @@ export default function TodayPage() {
       } else {
         setMode("prompt");
       }
-    } catch {
+    } catch (e) {
+      setErrMsg(e instanceof Error ? e.message : String(e));
       setMode("error");
     }
   }, [loadWeek]);
@@ -95,6 +97,7 @@ export default function TodayPage() {
         <div className="center">
           <h1>Couldn&apos;t connect</h1>
           <p className="muted">Check your signal and try again.</p>
+          {errMsg && <p className="small bad" style={{ margin: 0 }}>Details: {errMsg}</p>}
           <button className="btn primary" onClick={load}>
             Retry
           </button>

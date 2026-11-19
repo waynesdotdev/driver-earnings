@@ -6,7 +6,13 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as { pin?: unknown } | null;
   const pin = typeof body?.pin === "string" ? body.pin : "";
-  if (!(await checkPin(pin))) {
+  let ok = false;
+  try {
+    ok = await checkPin(pin);
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "server error" }, { status: 500 });
+  }
+  if (!ok) {
     // small delay to slow down guessing
     await new Promise((r) => setTimeout(r, 800));
     return NextResponse.json({ error: "Wrong PIN" }, { status: 403 });

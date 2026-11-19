@@ -20,7 +20,7 @@ async function env() {
 /** Token changes if you change the PIN, which logs out every device. */
 export async function expectedToken(): Promise<string> {
   const e = await env();
-  if (!e.APP_PIN || !e.AUTH_SECRET) throw new Error("APP_PIN and AUTH_SECRET must be set");
+  if (!e.APP_PIN || !e.AUTH_SECRET) throw new Error("Server setup: APP_PIN and AUTH_SECRET secrets are missing in Cloudflare");
   return hmacHex(e.AUTH_SECRET, `driver-earnings:${e.APP_PIN}`);
 }
 
@@ -42,12 +42,13 @@ export async function isAuthed(): Promise<boolean> {
 /** Wrap a route handler so it returns 401 unless logged in. */
 export function withAuth<A extends unknown[]>(handler: (...args: A) => Promise<Response>) {
   return async (...args: A): Promise<Response> => {
-    if (!(await isAuthed())) return NextResponse.json({ error: "unauthorised" }, { status: 401 });
     try {
+      if (!(await isAuthed())) return NextResponse.json({ error: "unauthorised" }, { status: 401 });
       return await handler(...args);
     } catch (err) {
       console.error(err);
-      return NextResponse.json({ error: "server error" }, { status: 500 });
+      const msg = err instanceof Error ? err.message : "server error";
+      return NextResponse.json({ error: msg }, { status: 500 });
     }
   };
 }

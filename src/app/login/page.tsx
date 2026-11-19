@@ -20,7 +20,8 @@ export default function LoginPage() {
     if (res.ok) {
       window.location.href = "/";
     } else {
-      setErr("Wrong PIN");
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      setErr(res.status === 403 ? "Wrong PIN" : body.error ?? `Error ${res.status}`);
       setPin("");
     }
   }
