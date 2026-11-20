@@ -388,18 +388,22 @@ a {
 /* one coloured layer per app, biggest on top */
 .weekbar .seg {
   width: 100%;
-  flex: none;
 }
 .weekbar .seg + .seg {
   border-top: 1px solid rgba(0, 0, 0, 0.35);
 }
-.weekbar .bar.current {
-  outline: 2px solid #fff;
-  outline-offset: 1px;
-}
+
 .weekbar .d {
   font-size: 11px;
   color: var(--muted);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+/* the working day: highlighted label instead of an outline round the bar */
+.weekbar .d.current {
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 800;
 }
 
 /* ---------- Lists ---------- */

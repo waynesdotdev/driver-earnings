@@ -6,6 +6,8 @@ import { fmtMoney } from "@/lib/money";
 import { fmtDay, fmtWeekday, weekDates } from "@/lib/dates";
 import { dayTotal, type Day } from "@/lib/types";
 
+const SEG_MIN = 7; // px: smallest an app's layer can be drawn
+
 /**
  * Mini Mon→Sun bar chart. Each day's bar is split into app colours, sized by
  * how much each app made, with the biggest earner on top.
@@ -30,18 +32,25 @@ export function WeekBars({ monday, days, current }: { monday: string; days: Day[
             aria-label={`${fmtDay(d)}: ${fmtMoney(t)}${parts.length ? ` (${parts.map((x) => `${x.p.name} ${fmtMoney(x.amt)}`).join(", ")})` : ""}`}
           >
             <div
-              className={`bar ${t > 0 ? "on" : ""} ${d === current ? "current" : ""}`}
-              style={{ height: `${Math.max(6, (t / max) * 100)}%` }}
+              className={`bar ${t > 0 ? "on" : ""}`}
+              // tall enough that every app's layer can be seen, however small
+              style={{ height: `${Math.max(6, (t / max) * 100)}%`, minHeight: parts.length * SEG_MIN }}
             >
               {parts.map(({ p, amt }) => (
-                <div key={p.id} className="seg" style={{
-                    height: `${(amt / t) * 100}%`,
+                <div
+                  key={p.id}
+                  className="seg"
+                  style={{
+                    // share the bar in proportion to the money, but never thinner than SEG_MIN
+                    flex: `${amt} 1 0`,
+                    minHeight: SEG_MIN,
                     background: p.bg,
                     boxShadow: p.chartEdge ? `inset 0 0 0 2px ${p.chartEdge}` : undefined,
-                  }} />
+                  }}
+                />
               ))}
             </div>
-            <div className="d">{fmtWeekday(d).slice(0, 2)}</div>
+            <div className={`d ${d === current ? "current" : ""}`}>{fmtWeekday(d).slice(0, 2)}</div>
           </Link>
         );
       })}
