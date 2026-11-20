@@ -1,9 +1,11 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Day, Entry, MonthSummary } from "./types";
 import type { PlatformId } from "./platforms";
+import { ensureSchema } from "./schema";
 
 async function db(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true });
+  await ensureSchema(env.DB); // creates any missing tables after an update
   return env.DB;
 }
 

@@ -99,11 +99,9 @@ Money is stored as whole pence, so there are no rounding errors.
 
 ## Updating
 
-When a new file appears in `migrations/`, apply it to the live database once:
-
-```bash
-npm run db:migrate:remote
-```
+The app creates any database tables it needs by itself (see `src/lib/schema.ts`), so updates
+work as soon as they deploy, with nothing to run by hand. `npm run db:migrate:remote` still works
+if you want to apply `migrations/` yourself.
 
 ## Backup
 
