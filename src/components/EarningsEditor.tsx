@@ -158,6 +158,39 @@ function PlatformCard({
 
   const style = { background: p.bg, color: p.fg };
 
+  // A saved £0 gets its own Remove button, which clears the entry (and puts a
+  // non-pinned app back behind its "+" button).
+  if (!editing && entry && entry.amount_pence === 0) {
+    return (
+      <div className="pcard zero" style={style}>
+        <button className="pcard-main" onClick={onEdit}>
+          <div>
+            <div className="pname">{p.name}</div>
+            <div className="pmeta">Updated {fmtTime(entry.updated_at)}</div>
+          </div>
+          <div className="pamt">{fmtMoney(0)}</div>
+        </button>
+        <button
+          className="pcard-remove"
+          style={{ color: p.fg, borderColor: p.fg }}
+          disabled={saving}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await onSave(null);
+            } catch {
+              window.alert(`Couldn't remove ${p.name}, try again`);
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          {saving ? "…" : "Remove"}
+        </button>
+      </div>
+    );
+  }
+
   if (!editing) {
     return (
       <button className="pcard" style={style} onClick={onEdit}>

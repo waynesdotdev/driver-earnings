@@ -110,6 +110,7 @@ export async function getMonths(): Promise<MonthSummary[]> {
             SUM(amount_pence) AS total_pence,
             COUNT(DISTINCT date) AS days
        FROM earnings
+      WHERE amount_pence > 0
       GROUP BY month
       ORDER BY month DESC`
   ).all<MonthSummary>();
