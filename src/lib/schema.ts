@@ -20,6 +20,9 @@ const STATEMENTS = [
   // 0003_custom_platforms
   `CREATE TABLE IF NOT EXISTS platforms (
      id TEXT PRIMARY KEY, name TEXT NOT NULL, color TEXT NOT NULL, created_at TEXT NOT NULL)`,
+  // 0004_day_notes
+  `CREATE TABLE IF NOT EXISTS day_notes (
+     date TEXT PRIMARY KEY, note TEXT NOT NULL, updated_at TEXT NOT NULL)`,
 ];
 
 // Once per running copy of the app (not per request).

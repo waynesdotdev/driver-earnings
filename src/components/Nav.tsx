@@ -7,6 +7,7 @@ const ITEMS = [
   { href: "/", label: "Today", ico: "●" },
   { href: "/week", label: "Week", ico: "▦" },
   { href: "/history", label: "History", ico: "☰" },
+  { href: "/more", label: "More", ico: "⋯" },
 ];
 
 export default function Nav() {

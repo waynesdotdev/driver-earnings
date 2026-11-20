@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Nav from "@/components/Nav";
 import EarningsEditor from "@/components/EarningsEditor";
+import DayNote from "@/components/DayNote";
 import { api } from "@/lib/api";
 import { fmtDay, fmtDayLong, fmtTime, isDateStr, todayLocal } from "@/lib/dates";
 import { fmtMoney } from "@/lib/money";
@@ -78,6 +79,7 @@ export default function DayPage() {
             // a finished day already needed the PIN, so no extra pop-up on each save
             confirmLabel={isActive || finished ? undefined : `You are changing a past day: ${fmtDayLong(date)}.`}
           />
+          <DayNote day={day} onChange={setDay} locked={locked} />
         </>
       )}
       <Nav />

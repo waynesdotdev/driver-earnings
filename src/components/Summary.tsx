@@ -118,6 +118,7 @@ export function DayList({ dates, days, activeDate }: { dates: string[]; days: Da
                 ))}
                 {!d || t === 0 ? <span className="muted small">No earnings</span> : null}
               </div>
+              {d?.note && <div className="day-note">📝 {d.note}</div>}
             </div>
             <div style={{ fontWeight: 900, fontSize: 18, fontVariantNumeric: "tabular-nums" }} className={t ? "good" : "muted"}>
               {fmtMoney(t)}

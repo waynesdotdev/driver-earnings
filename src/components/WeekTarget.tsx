@@ -16,6 +16,7 @@ const CHANGED = "de-target-change"; // keeps the prompt and the panel in sync
  * still to make. `refDate` is the day being worked (for "days left").
  * show="prompt": only the big "how much this week?" card, when the week has no target.
  * show="panel":  only the collapsible Weekly target section.
+ * show="today":  only the Today's target section (needs `earnedToday`).
  */
 export default function WeekTarget({
   monday,
@@ -23,13 +24,16 @@ export default function WeekTarget({
   refDate,
   show,
   withPrompt = false,
+  earnedToday = 0,
 }: {
   monday: string;
   earned: number;
   refDate: string;
-  show: "prompt" | "panel";
+  show: "prompt" | "panel" | "today";
   /** Panel only: a prompt card is also on this page, so stay hidden while it asks. */
   withPrompt?: boolean;
+  /** What's been made on `refDate` (already included in `earned`), for the per-day figures. */
+  earnedToday?: number;
 }) {
   const [target, setTarget] = useState<number | null | undefined>(undefined); // undefined = loading
   const [editing, setEditing] = useState(false);
@@ -66,6 +70,10 @@ export default function WeekTarget({
   if (target === undefined) return null;
 
   const weekLabel = `${fmtDay(monday)} – ${fmtDay(addDays(monday, 6))}`;
+
+  if (show === "today") {
+    return target === null ? null : <TodayTarget target={target} earned={earned} earnedToday={earnedToday} monday={monday} refDate={refDate} />;
+  }
 
   const asking = target === null && !skipped;
   if (show === "prompt" && !asking) return null;
@@ -111,6 +119,9 @@ export default function WeekTarget({
   const dates = weekDates(monday);
   const idx = dates.indexOf(refDate);
   const daysLeft = idx >= 0 ? 7 - idx : 0; // including the day being worked
+  // Same figure as Today's target: what was left at the start of the day, split
+  // evenly, so the two never disagree.
+  const perDay = daysLeft > 0 ? Math.ceil((target - (earned - earnedToday)) / daysLeft) : 0;
   const weekOver = refDate > dates[6];
 
   return (
@@ -152,7 +163,7 @@ export default function WeekTarget({
 
       {remaining > 0 && daysLeft > 0 && (
         <div className="small muted" style={{ marginTop: 6 }}>
-          About <strong style={{ color: "var(--text)" }}>{fmtMoney(Math.ceil(remaining / daysLeft))}</strong> a day over the{" "}
+          About <strong style={{ color: "var(--text)" }}>{fmtMoney(perDay)}</strong> a day over the{" "}
           {daysLeft === 1 ? "last day" : `${daysLeft} days left`} (incl. {fmtDay(refDate).split(" ")[0]})
         </div>
       )}
@@ -241,5 +252,72 @@ function FloatingAmountInput({ value, onChange }: { value: string; onChange: (v:
         )}
       </span>
     </label>
+  );
+}
+
+/**
+ * Today's share of the weekly target: what's left of the week (before today)
+ * split evenly over the days left, including today. Fixed for the whole day,
+ * so it doesn't move as you earn.
+ */
+function TodayTarget({
+  target,
+  earned,
+  earnedToday,
+  monday,
+  refDate,
+}: {
+  target: number;
+  earned: number;
+  earnedToday: number;
+  monday: string;
+  refDate: string;
+}) {
+  const idx = weekDates(monday).indexOf(refDate);
+  if (idx < 0) return null;
+  const daysLeft = 7 - idx; // including today
+  const before = earned - earnedToday;
+  const daily = Math.max(0, Math.ceil((target - before) / daysLeft));
+  const toGo = daily - earnedToday;
+  const pct = daily > 0 ? Math.min(100, (earnedToday / daily) * 100) : 100;
+
+  return (
+    <Section
+      id="today-target"
+      title="Today's target"
+      summary={
+        <span className={`target-summary ${toGo <= 0 ? "good" : ""}`}>{toGo > 0 ? `${fmtMoney(toGo)} to go` : "Hit ✓"}</span>
+      }
+    >
+      {daily === 0 ? (
+        <div className="target-main">
+          <div className="small muted">The week&apos;s target is already hit</div>
+          <div className="big good">Bonus day 🎉</div>
+        </div>
+      ) : (
+        <>
+          <div className="target-main">
+            {toGo > 0 ? (
+              <>
+                <div className="small muted">Still to make today</div>
+                <div className="big">{fmtMoney(toGo)}</div>
+              </>
+            ) : (
+              <>
+                <div className="small muted">{toGo === 0 ? "Today's target hit exactly" : "Today's target hit · over by"}</div>
+                <div className="big good">{toGo === 0 ? "🎉" : `+${fmtMoney(-toGo)}`}</div>
+              </>
+            )}
+          </div>
+          <div className="target-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)}>
+            <div style={{ width: `${pct}%` }} className={toGo <= 0 ? "done" : ""} />
+          </div>
+          <div className="small muted" style={{ marginTop: 8 }}>
+            Made <strong style={{ color: "var(--text)" }}>{fmtMoney(earnedToday)}</strong> of {fmtMoney(daily)} today
+            {daysLeft > 1 ? ` · what's left of your ${fmtMoney(target)} week, split over ${daysLeft} days` : " · last day of the week"}
+          </div>
+        </>
+      )}
+    </Section>
   );
 }

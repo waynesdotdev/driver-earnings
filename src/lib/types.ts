@@ -11,6 +11,8 @@ export interface Day {
   started_at: string | null;
   closed_at: string | null;
   earnings: Partial<Record<PlatformId, Entry>>;
+  /** Free-text note for the day, or null */
+  note: string | null;
 }
 
 export interface MonthSummary {

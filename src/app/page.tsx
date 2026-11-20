@@ -7,6 +7,7 @@ import { WeekBars } from "@/components/Summary";
 import { HideableAmount, Section } from "@/components/Section";
 import HoldButton from "@/components/HoldButton";
 import WeekTarget from "@/components/WeekTarget";
+import DayNote from "@/components/DayNote";
 import { api } from "@/lib/api";
 import { addDays, fmtDay, fmtDayLong, mondayOf, todayLocal } from "@/lib/dates";
 import { fmtMoney } from "@/lib/money";
@@ -23,6 +24,7 @@ export default function TodayPage() {
   const [active, setActive] = useState<Day | null>(null);
   const [finished, setFinished] = useState<Day | null>(null);
   const [week, setWeek] = useState<Day[]>([]);
+  const [weekReady, setWeekReady] = useState(false); // daily target needs the whole week loaded
   const [busy, setBusy] = useState(false);
   const [today, setToday] = useState(todayLocal());
   const [errMsg, setErrMsg] = useState("");
@@ -31,6 +33,7 @@ export default function TodayPage() {
     const mon = mondayOf(date);
     const { days } = await api.range(mon, addDays(mon, 6));
     setWeek(days);
+    setWeekReady(true);
   }, []);
 
   const load = useCallback(async () => {
@@ -141,7 +144,24 @@ export default function TodayPage() {
 
           <EarningsEditor day={active} onChange={onDayChange} />
 
-          <WeekTarget show="panel" withPrompt monday={mondayOf(active.date)} earned={weekTotal} refDate={active.date} />
+          {weekReady && (
+            <WeekTarget
+              show="today"
+              monday={mondayOf(active.date)}
+              earned={weekTotal}
+              earnedToday={dayTotal(active)}
+              refDate={active.date}
+            />
+          )}
+
+          <WeekTarget
+            show="panel"
+            withPrompt
+            monday={mondayOf(active.date)}
+            earned={weekTotal}
+            earnedToday={dayTotal(active)}
+            refDate={active.date}
+          />
 
           <Section
             id="today-week"
@@ -150,6 +170,8 @@ export default function TodayPage() {
           >
             <WeekBars monday={mondayOf(active.date)} days={week} current={active.date} />
           </Section>
+
+          <DayNote day={active} onChange={onDayChange} />
 
           <div className="finish-bar">
             <HoldButton className="btn danger" onHold={finish} disabled={busy}>

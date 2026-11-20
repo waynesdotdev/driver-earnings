@@ -74,7 +74,13 @@ export default function WeekPage() {
             </div>
           </Section>
 
-          <WeekTarget show="panel" monday={monday} earned={total} refDate={todayLocal()} />
+          <WeekTarget
+            show="panel"
+            monday={monday}
+            earned={total}
+            earnedToday={dayTotal(days.find((d) => d.date === todayLocal()))}
+            refDate={todayLocal()}
+          />
 
           <Section id="week-by-app" title="By app">
             <PlatformSplit days={days} />

@@ -24,30 +24,42 @@ interface EarnRow {
   updated_at: string;
 }
 
-function assemble(days: DayRow[], earns: EarnRow[]): Day[] {
+interface NoteRow {
+  date: string;
+  note: string;
+}
+
+function assemble(days: DayRow[], earns: EarnRow[], notes: NoteRow[] = []): Day[] {
   const map = new Map<string, Day>();
-  for (const d of days) map.set(d.date, { ...d, earnings: {} });
+  for (const d of days) map.set(d.date, { ...d, earnings: {}, note: null });
   for (const e of earns) {
     let day = map.get(e.date);
     if (!day) {
-      day = { date: e.date, status: "closed", started_at: null, closed_at: null, earnings: {} };
+      day = { date: e.date, status: "closed", started_at: null, closed_at: null, earnings: {}, note: null };
       map.set(e.date, day);
     }
     day.earnings[e.platform] = { amount_pence: e.amount_pence, updated_at: e.updated_at } satisfies Entry;
+  }
+  for (const n of notes) {
+    const day = map.get(n.date);
+    if (day) day.note = n.note;
+    else map.set(n.date, { date: n.date, status: "none", started_at: null, closed_at: null, earnings: {}, note: n.note });
   }
   return [...map.values()].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export async function getDay(date: string): Promise<Day> {
   const DB = await db();
-  const [d, e] = await DB.batch([
+  const [d, e, n] = await DB.batch([
     DB.prepare("SELECT * FROM days WHERE date = ?").bind(date),
     DB.prepare("SELECT * FROM earnings WHERE date = ?").bind(date),
+    DB.prepare("SELECT date, note FROM day_notes WHERE date = ?").bind(date),
   ]);
   const days = (d.results ?? []) as unknown as DayRow[];
   const earns = (e.results ?? []) as unknown as EarnRow[];
-  const out = assemble(days, earns)[0];
-  return out ?? { date, status: "none", started_at: null, closed_at: null, earnings: {} };
+  const notes = (n.results ?? []) as unknown as NoteRow[];
+  const out = assemble(days, earns, notes)[0];
+  return out ?? { date, status: "none", started_at: null, closed_at: null, earnings: {}, note: null };
 }
 
 export async function getActiveDay(): Promise<Day | null> {
@@ -98,11 +110,31 @@ export async function setEarning(date: string, platform: PlatformId, pence: numb
 
 export async function getRange(from: string, to: string): Promise<Day[]> {
   const DB = await db();
-  const [d, e] = await DB.batch([
+  const [d, e, n] = await DB.batch([
     DB.prepare("SELECT * FROM days WHERE date BETWEEN ? AND ?").bind(from, to),
     DB.prepare("SELECT * FROM earnings WHERE date BETWEEN ? AND ?").bind(from, to),
+    DB.prepare("SELECT date, note FROM day_notes WHERE date BETWEEN ? AND ?").bind(from, to),
   ]);
-  return assemble((d.results ?? []) as unknown as DayRow[], (e.results ?? []) as unknown as EarnRow[]);
+  return assemble(
+    (d.results ?? []) as unknown as DayRow[],
+    (e.results ?? []) as unknown as EarnRow[],
+    (n.results ?? []) as unknown as NoteRow[]
+  );
+}
+
+/** Saves the day's note. Empty clears it. */
+export async function setNote(date: string, note: string): Promise<Day> {
+  const DB = await db();
+  const clean = note.trim();
+  if (!clean) await DB.prepare("DELETE FROM day_notes WHERE date = ?").bind(date).run();
+  else
+    await DB.prepare(
+      `INSERT INTO day_notes (date, note, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(date) DO UPDATE SET note = excluded.note, updated_at = excluded.updated_at`
+    )
+      .bind(date, clean, now())
+      .run();
+  return getDay(date);
 }
 
 // ---------- Apps the driver added themselves ----------
@@ -154,6 +186,17 @@ export async function getTarget(monday: string): Promise<{ target_pence: number 
     .bind(monday)
     .first<{ target_pence: number }>();
   return { target_pence: row?.target_pence ?? null };
+}
+
+/** Every weekly target whose week starts between `from` and `to`. */
+export async function getTargets(from: string, to: string): Promise<{ monday: string; target_pence: number }[]> {
+  const DB = await db();
+  const { results } = await DB.prepare(
+    "SELECT monday, target_pence FROM week_targets WHERE monday BETWEEN ? AND ? ORDER BY monday"
+  )
+    .bind(from, to)
+    .all<{ monday: string; target_pence: number }>();
+  return results ?? [];
 }
 
 export async function setTarget(monday: string, pence: number): Promise<void> {

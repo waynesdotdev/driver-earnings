@@ -28,10 +28,14 @@ export const api = {
   close: (date: string) => req<{ day: Day }>(`/api/day/${date}/close`, { method: "POST" }),
   set: (date: string, platform: PlatformId, amount_pence: number | null) =>
     req<{ day: Day }>(`/api/day/${date}`, { method: "PUT", body: JSON.stringify({ platform, amount_pence }) }),
+  note: (date: string, note: string) =>
+    req<{ day: Day }>(`/api/day/${date}/note`, { method: "PUT", body: JSON.stringify({ note }) }),
   range: (from: string, to: string) => req<{ days: Day[] }>(`/api/range?from=${from}&to=${to}`),
   target: (monday: string) => req<WeekTarget>(`/api/target?monday=${monday}`),
   setTarget: (monday: string, target_pence: number) =>
     req<WeekTarget>("/api/target", { method: "PUT", body: JSON.stringify({ monday, target_pence }) }),
+  targets: (from: string, to: string) =>
+    req<{ targets: { monday: string; target_pence: number }[] }>(`/api/targets?from=${from}&to=${to}`),
   months: () => req<{ months: MonthSummary[] }>("/api/months"),
   addPlatform: (name: string, color: string) =>
     req<{ platform: CustomPlatformRow; platforms: CustomPlatformRow[] }>("/api/platforms", {

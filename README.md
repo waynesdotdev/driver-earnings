@@ -13,6 +13,11 @@ A mobile-first earnings tracker for multi-app delivery drivers
   (always on screen) or **As needed** (a "+" button). You can rename, recolour, or delete it if it has no earnings yet.
 - **Weekly target**: each new week asks how much you want to earn, then shows how much is still to make
   (and roughly how much a day over the days left). Change it any time.
+- **Today's target**: what's left of the weekly target at the start of the day, split over the days left, so you
+  know what you still need to make today.
+- **Notes**: a note for any day ("Rain, very busy", "Tips came in late"), shown in day lists and exports.
+- **Export**: More → Excel (.xlsx, with Days + Weeks sheets) or CSV, for this week, last month, all time or any dates.
+- **Light / dark / auto theme** and **Log out**, on the More tab.
 - **History**: every month with totals. Tap a month to see its days, then tap a day to edit it.
   You get a warning before you change a past day.
 - PIN login. Data is stored in **Cloudflare D1** (free tier).
@@ -93,6 +98,7 @@ npm run dev
 | `days`     | `date` (PK, YYYY-MM-DD), `status` open/closed, `started_at`, `closed_at` |
 | `earnings` | `date`, `platform`, `amount_pence`, `updated_at` (PK date+platform) |
 | `platforms` | `id` (PK, `c_…`), `name`, `color`, `created_at`: apps added by the driver |
+| `day_notes` | `date` (PK), `note`, `updated_at` |
 | `week_targets` | `monday` (PK, YYYY-MM-DD), `target_pence`, `updated_at` |
 
 Money is stored as whole pence, so there are no rounding errors.
