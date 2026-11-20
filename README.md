@@ -9,6 +9,8 @@ A mobile-first earnings tracker for multi-app delivery drivers
   update **replaces** the last one. It never adds up the updates.
 - **Finish day**: closes the day and keeps it in the database forever.
 - **Week view** (Mon–Sun): week total, split by app, every day, and a comparison with last week.
+- **Weekly target**: each new week asks how much you want to earn, then shows how much is still to make
+  (and roughly how much a day over the days left). Change it any time.
 - **History**: every month with totals. Tap a month to see its days, then tap a day to edit it.
   You get a warning before you change a past day.
 - PIN login. Data is stored in **Cloudflare D1** (free tier).
@@ -88,8 +90,17 @@ npm run dev
 |------------|------------------------------------------------------------|
 | `days`     | `date` (PK, YYYY-MM-DD), `status` open/closed, `started_at`, `closed_at` |
 | `earnings` | `date`, `platform`, `amount_pence`, `updated_at` (PK date+platform) |
+| `week_targets` | `monday` (PK, YYYY-MM-DD), `target_pence`, `updated_at` |
 
 Money is stored as whole pence, so there are no rounding errors.
+
+## Updating
+
+When a new file appears in `migrations/`, apply it to the live database once:
+
+```bash
+npm run db:migrate:remote
+```
 
 ## Backup
 

@@ -79,7 +79,7 @@ export function DayList({ dates, days, activeDate }: { dates: string[]; days: Da
                 {date === activeDate && <span className="chip" style={{ marginLeft: 6 }}>working</span>}
               </div>
               <div className="dots">
-                {PLATFORMS.filter((p) => d?.earnings[p.id]).map((p) => (
+                {PLATFORMS.filter((p) => (d?.earnings[p.id]?.amount_pence ?? 0) > 0).map((p) => (
                   <span key={p.id} className="dot" style={{ background: p.bg, color: p.fg }}>
                     {fmtMoney(d!.earnings[p.id]!.amount_pence)}
                   </span>
