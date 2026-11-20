@@ -103,6 +103,48 @@ export async function getRange(from: string, to: string): Promise<Day[]> {
   return assemble((d.results ?? []) as unknown as DayRow[], (e.results ?? []) as unknown as EarnRow[]);
 }
 
+// ---------- Apps the driver added themselves ----------
+
+export interface CustomPlatformRow {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export async function listCustomPlatforms(): Promise<CustomPlatformRow[]> {
+  const DB = await db();
+  const { results } = await DB.prepare("SELECT id, name, color FROM platforms ORDER BY created_at").all<CustomPlatformRow>();
+  return results ?? [];
+}
+
+export async function customPlatformExists(id: string): Promise<boolean> {
+  const DB = await db();
+  return !!(await DB.prepare("SELECT 1 AS x FROM platforms WHERE id = ?").bind(id).first());
+}
+
+export async function addCustomPlatform(name: string, color: string): Promise<CustomPlatformRow> {
+  const DB = await db();
+  const id = "c_" + crypto.randomUUID().replace(/-/g, "").slice(0, 10);
+  await DB.prepare("INSERT INTO platforms (id, name, color, created_at) VALUES (?, ?, ?, ?)").bind(id, name, color, now()).run();
+  return { id, name, color };
+}
+
+export async function updateCustomPlatform(id: string, name: string, color: string): Promise<boolean> {
+  const DB = await db();
+  const r = await DB.prepare("UPDATE platforms SET name = ?, color = ? WHERE id = ?").bind(name, color, id).run();
+  return (r.meta?.changes ?? 0) > 0;
+}
+
+/** Deletes an app. Refuses (returns the number of days) if it has earnings saved. */
+export async function deleteCustomPlatform(id: string): Promise<{ deleted: boolean; daysWithEarnings: number }> {
+  const DB = await db();
+  const row = await DB.prepare("SELECT COUNT(*) AS n FROM earnings WHERE platform = ?").bind(id).first<{ n: number }>();
+  const n = row?.n ?? 0;
+  if (n > 0) return { deleted: false, daysWithEarnings: n };
+  await DB.prepare("DELETE FROM platforms WHERE id = ?").bind(id).run();
+  return { deleted: true, daysWithEarnings: 0 };
+}
+
 /** The target for the week starting `monday` (null if not set yet). */
 export async function getTarget(monday: string): Promise<{ target_pence: number | null }> {
   const DB = await db();

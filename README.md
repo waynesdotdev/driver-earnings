@@ -1,7 +1,7 @@
 # Driver Earnings 🛵💷
 
 A mobile-first earnings tracker for multi-app delivery drivers
-(Uber Eats, Deliveroo, Just Eat, Stuart, Amazon Flex).
+(Uber Eats, Deliveroo, Just Eat, Stuart, Amazon Flex, plus any others you add yourself).
 
 - **Working day prompt**: the first time you open the app each calendar day, it asks
   *"Start a new day"* or *"🌙 Still working yesterday"*, so night shifts stay on the right day.
@@ -9,6 +9,8 @@ A mobile-first earnings tracker for multi-app delivery drivers
   update **replaces** the last one. It never adds up the updates.
 - **Finish day**: closes the day and keeps it in the database forever.
 - **Week view** (Mon–Sun): week total, split by app, every day, and a comparison with last week.
+- **Your own apps**: ⚙ Apps → *Add your own app*. Give it a name and a colour, and pick **Priority**
+  (always on screen) or **As needed** (a "+" button). You can rename, recolour, or delete it if it has no earnings yet.
 - **Weekly target**: each new week asks how much you want to earn, then shows how much is still to make
   (and roughly how much a day over the days left). Change it any time.
 - **History**: every month with totals. Tap a month to see its days, then tap a day to edit it.
@@ -90,6 +92,7 @@ npm run dev
 |------------|------------------------------------------------------------|
 | `days`     | `date` (PK, YYYY-MM-DD), `status` open/closed, `started_at`, `closed_at` |
 | `earnings` | `date`, `platform`, `amount_pence`, `updated_at` (PK date+platform) |
+| `platforms` | `id` (PK, `c_…`), `name`, `color`, `created_at`: apps added by the driver |
 | `week_targets` | `monday` (PK, YYYY-MM-DD), `target_pence`, `updated_at` |
 
 Money is stored as whole pence, so there are no rounding errors.

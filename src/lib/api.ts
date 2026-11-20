@@ -2,6 +2,7 @@
 
 import type { Day, MonthSummary, WeekTarget } from "./types";
 import type { PlatformId } from "./platforms";
+import type { CustomPlatformRow } from "./db";
 
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -32,7 +33,15 @@ export const api = {
   setTarget: (monday: string, target_pence: number) =>
     req<WeekTarget>("/api/target", { method: "PUT", body: JSON.stringify({ monday, target_pence }) }),
   months: () => req<{ months: MonthSummary[] }>("/api/months"),
-  verifyPin: (pin: string) => req<{ ok: true }>("/api/verify-pin", { method: "POST", body: JSON.stringify({ pin }) }),
+  addPlatform: (name: string, color: string) =>
+    req<{ platform: CustomPlatformRow; platforms: CustomPlatformRow[] }>("/api/platforms", {
+      method: "POST",
+      body: JSON.stringify({ name, color }),
+    }),
+  editPlatform: (id: string, name: string, color: string) =>
+    req<{ platforms: CustomPlatformRow[] }>(`/api/platforms/${id}`, { method: "PATCH", body: JSON.stringify({ name, color }) }),
+  deletePlatform: (id: string) => req<{ platforms: CustomPlatformRow[] }>(`/api/platforms/${id}`, { method: "DELETE" }),
+  verifyPin:(pin: string) => req<{ ok: true }>("/api/verify-pin", { method: "POST", body: JSON.stringify({ pin }) }),
   login: (pin: string) => req<{ ok: true }>("/api/login", { method: "POST", body: JSON.stringify({ pin }) }),
   logout: () => req<{ ok: true }>("/api/logout", { method: "POST" }),
 };

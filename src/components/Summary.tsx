@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { PLATFORMS } from "@/lib/platforms";
+import { usePlatforms } from "@/lib/usePlatforms";
 import { fmtMoney } from "@/lib/money";
 import { fmtDay, fmtWeekday, weekDates } from "@/lib/dates";
 import { dayTotal, type Day } from "@/lib/types";
@@ -13,6 +13,7 @@ const SEG_MIN = 7; // px: smallest an app's layer can be drawn
  * how much each app made, with the biggest earner on top.
  */
 export function WeekBars({ monday, days, current }: { monday: string; days: Day[]; current?: string }) {
+  const PLATFORMS = usePlatforms();
   const byDate = new Map(days.map((d) => [d.date, d]));
   const dates = weekDates(monday);
   const max = Math.max(1, ...dates.map((d) => dayTotal(byDate.get(d))));
@@ -60,6 +61,7 @@ export function WeekBars({ monday, days, current }: { monday: string; days: Day[
 
 /** Stacked colour bar + per-app totals. */
 export function PlatformSplit({ days }: { days: Day[] }) {
+  const PLATFORMS = usePlatforms();
   const totals = PLATFORMS.map((p) => ({
     p,
     t: days.reduce((s, d) => s + (d.earnings[p.id]?.amount_pence ?? 0), 0),
@@ -94,6 +96,7 @@ export function PlatformSplit({ days }: { days: Day[] }) {
 
 /** A tappable list of days with totals and per-app pills. */
 export function DayList({ dates, days, activeDate }: { dates: string[]; days: Day[]; activeDate?: string }) {
+  const PLATFORMS = usePlatforms();
   const byDate = new Map(days.map((d) => [d.date, d]));
   return (
     <div className="list">
