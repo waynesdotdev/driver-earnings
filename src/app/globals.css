@@ -362,7 +362,7 @@ a {
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
   align-items: end;
-  height: 70px;
+  height: 110px;
   margin-top: 8px;
 }
 .weekbar .col {
@@ -380,10 +380,22 @@ a {
   min-height: 4px;
 }
 .weekbar .bar.on {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--good);
+}
+/* one coloured layer per app, biggest on top */
+.weekbar .seg {
+  width: 100%;
+  flex: none;
+}
+.weekbar .seg + .seg {
+  border-top: 1px solid rgba(0, 0, 0, 0.35);
 }
 .weekbar .bar.current {
   outline: 2px solid #fff;
+  outline-offset: 1px;
 }
 .weekbar .d {
   font-size: 11px;

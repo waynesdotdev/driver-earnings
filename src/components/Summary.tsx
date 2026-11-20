@@ -6,21 +6,41 @@ import { fmtMoney } from "@/lib/money";
 import { fmtDay, fmtWeekday, weekDates } from "@/lib/dates";
 import { dayTotal, type Day } from "@/lib/types";
 
-/** Mini Mon→Sun bar chart. */
+/**
+ * Mini Mon→Sun bar chart. Each day's bar is split into app colours, sized by
+ * how much each app made, with the biggest earner on top.
+ */
 export function WeekBars({ monday, days, current }: { monday: string; days: Day[]; current?: string }) {
-  const byDate = new Map(days.map((d) => [d.date, dayTotal(d)]));
+  const byDate = new Map(days.map((d) => [d.date, d]));
   const dates = weekDates(monday);
-  const max = Math.max(1, ...dates.map((d) => byDate.get(d) ?? 0));
+  const max = Math.max(1, ...dates.map((d) => dayTotal(byDate.get(d))));
   return (
     <div className="weekbar">
       {dates.map((d) => {
-        const t = byDate.get(d) ?? 0;
+        const day = byDate.get(d);
+        const t = dayTotal(day);
+        const parts = PLATFORMS.map((p) => ({ p, amt: day?.earnings[p.id]?.amount_pence ?? 0 }))
+          .filter((x) => x.amt > 0)
+          .sort((a, b) => b.amt - a.amt); // biggest first = drawn at the top
         return (
-          <Link href={`/day/${d}`} className="col" key={d}>
+          <Link
+            href={`/day/${d}`}
+            className="col"
+            key={d}
+            aria-label={`${fmtDay(d)}: ${fmtMoney(t)}${parts.length ? ` (${parts.map((x) => `${x.p.name} ${fmtMoney(x.amt)}`).join(", ")})` : ""}`}
+          >
             <div
               className={`bar ${t > 0 ? "on" : ""} ${d === current ? "current" : ""}`}
               style={{ height: `${Math.max(6, (t / max) * 100)}%` }}
-            />
+            >
+              {parts.map(({ p, amt }) => (
+                <div key={p.id} className="seg" style={{
+                    height: `${(amt / t) * 100}%`,
+                    background: p.bg,
+                    boxShadow: p.chartEdge ? `inset 0 0 0 2px ${p.chartEdge}` : undefined,
+                  }} />
+              ))}
+            </div>
             <div className="d">{fmtWeekday(d).slice(0, 2)}</div>
           </Link>
         );
