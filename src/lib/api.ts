@@ -32,6 +32,7 @@ export const api = {
   setTarget: (monday: string, target_pence: number) =>
     req<WeekTarget>("/api/target", { method: "PUT", body: JSON.stringify({ monday, target_pence }) }),
   months: () => req<{ months: MonthSummary[] }>("/api/months"),
+  verifyPin: (pin: string) => req<{ ok: true }>("/api/verify-pin", { method: "POST", body: JSON.stringify({ pin }) }),
   login: (pin: string) => req<{ ok: true }>("/api/login", { method: "POST", body: JSON.stringify({ pin }) }),
   logout: () => req<{ ok: true }>("/api/logout", { method: "POST" }),
 };

@@ -843,3 +843,42 @@ button.link {
     display: none;
   }
 }
+
+/* ---------- Locked finished day ---------- */
+.lockbox {
+  background: #2a1f08;
+  border: 1px solid var(--warn);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #ffe2a6;
+}
+.lockbox .lock-ico {
+  font-size: 28px;
+  line-height: 1;
+}
+.lockbox h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #fff3d6;
+}
+.lockbox p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.lockbox .pin {
+  background: var(--bg);
+}
+.lockbox .btn + .btn {
+  margin-top: 0;
+}
+.pcard.locked {
+  opacity: 0.8;
+}
+.pcard.locked:active {
+  transform: none;
+}

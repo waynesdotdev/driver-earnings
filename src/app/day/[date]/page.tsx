@@ -14,6 +14,8 @@ export default function DayPage() {
   const router = useRouter();
   const [day, setDay] = useState<Day | null>(null);
   const [activeDate, setActiveDate] = useState<string | null | undefined>(undefined);
+  // A finished day is locked until the PIN is re-entered (lasts until you leave the page).
+  const [unlocked, setUnlocked] = useState(false);
 
   useEffect(() => {
     if (!isDateStr(date)) return;
@@ -25,6 +27,8 @@ export default function DayPage() {
 
   const isActive = activeDate === date;
   const isFuture = date > todayLocal();
+  const finished = day?.status === "closed" && !isActive;
+  const locked = finished && !unlocked;
 
   return (
     <main className="app">
@@ -47,6 +51,15 @@ export default function DayPage() {
         <>
           {isActive ? (
             <div className="banner info">This is your current working day.</div>
+          ) : locked ? (
+            <UnlockBox date={date} closedAt={day.closed_at} activeDate={activeDate} onUnlock={() => setUnlocked(true)} />
+          ) : finished ? (
+            <div className="banner warn">
+              <strong>🔓 Unlocked: {fmtDayLong(date)}</strong>
+              <br />
+              This is a finished day, not the one you&apos;re working. Changes replace what was saved. It locks again when you
+              leave this page.
+            </div>
           ) : (
             <div className="banner warn">
               <strong>⚠ You are editing a past day</strong>
@@ -61,11 +74,77 @@ export default function DayPage() {
           <EarningsEditor
             day={day}
             onChange={setDay}
-            confirmLabel={isActive ? undefined : `You are changing a past day: ${fmtDayLong(date)}.`}
+            locked={locked}
+            // a finished day already needed the PIN, so no extra pop-up on each save
+            confirmLabel={isActive || finished ? undefined : `You are changing a past day: ${fmtDayLong(date)}.`}
           />
         </>
       )}
       <Nav />
     </main>
+  );
+}
+
+/** The "are you sure?" box on a finished day, with a PIN to unlock editing. */
+function UnlockBox({
+  date,
+  closedAt,
+  activeDate,
+  onUnlock,
+}: {
+  date: string;
+  closedAt: string | null;
+  activeDate: string | null;
+  onUnlock: () => void;
+}) {
+  const router = useRouter();
+  const [pin, setPin] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setErr(null);
+    try {
+      await api.verifyPin(pin);
+      onUnlock();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not check PIN");
+      setPin("");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className="lockbox" onSubmit={submit}>
+      <div className="lock-ico" aria-hidden="true">
+        🔒
+      </div>
+      <h2>This isn&apos;t the day you&apos;re working</h2>
+      <p>
+        <strong>{fmtDayLong(date)}</strong> is finished{closedAt ? ` (closed at ${fmtTime(closedAt)})` : ""}.
+        {activeDate && activeDate !== date && <> You&apos;re currently working {fmtDay(activeDate)}.</>}
+      </p>
+      <p>Updating it because tips came in late, or an app adjusted your pay? Enter your PIN to unlock it.</p>
+      <input
+        className="pin"
+        type="password"
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="PIN"
+        aria-label="PIN"
+        value={pin}
+        onChange={(e) => setPin(e.target.value)}
+      />
+      {err && <div className="bad" style={{ fontWeight: 700 }}>{err}</div>}
+      <button className="btn primary" disabled={busy || !pin}>
+        {busy ? "Checking…" : "Unlock to edit"}
+      </button>
+      <button type="button" className="btn" onClick={() => router.back()}>
+        Not this day, go back
+      </button>
+    </form>
   );
 }

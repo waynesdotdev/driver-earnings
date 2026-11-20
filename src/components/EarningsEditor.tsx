@@ -12,6 +12,8 @@ interface Props {
   onChange: (day: Day) => void;
   /** Ask for confirmation before saving (used when editing past days). */
   confirmLabel?: string;
+  /** Show the figures only: no editing, no adding apps. */
+  locked?: boolean;
 }
 
 // Which apps are always shown. Stored per phone. Apps that aren't pinned
@@ -34,7 +36,7 @@ function usePinned(): [PlatformId[], (ids: PlatformId[]) => void] {
   return [pinned, save];
 }
 
-export default function EarningsEditor({ day, onChange, confirmLabel }: Props) {
+export default function EarningsEditor({ day, onChange, confirmLabel, locked = false }: Props) {
   const [editing, setEditing] = useState<PlatformId | null>(null);
   const [added, setAdded] = useState<PlatformId[]>([]);
   const [managing, setManaging] = useState(false);
@@ -44,7 +46,10 @@ export default function EarningsEditor({ day, onChange, confirmLabel }: Props) {
   useEffect(() => setAdded([]), [day.date]);
 
   // An app is shown if it's pinned, already has a figure today, or was just added.
-  const visible = PLATFORMS.filter((p) => pinned.includes(p.id) || day.earnings[p.id] || added.includes(p.id));
+  // Locked: only apps that have a figure.
+  const visible = PLATFORMS.filter((p) =>
+    locked ? day.earnings[p.id] : pinned.includes(p.id) || day.earnings[p.id] || added.includes(p.id)
+  );
   const hidden = PLATFORMS.filter((p) => !visible.includes(p));
 
   function done(id: PlatformId) {
@@ -60,7 +65,8 @@ export default function EarningsEditor({ day, onChange, confirmLabel }: Props) {
           key={p.id}
           platform={p}
           entry={day.earnings[p.id]}
-          editing={editing === p.id}
+          locked={locked}
+          editing={!locked && editing === p.id}
           onEdit={() => setEditing(p.id)}
           onDone={() => done(p.id)}
           onSave={async (pence) => {
@@ -75,26 +81,30 @@ export default function EarningsEditor({ day, onChange, confirmLabel }: Props) {
         />
       ))}
 
-      <div className="addons">
-        {hidden.map((p) => (
-          <button
-            key={p.id}
-            className="addon"
-            style={{ background: p.bg, color: p.fg }}
-            onClick={() => {
-              setAdded((a) => [...a, p.id]);
-              setEditing(p.id);
-            }}
-          >
-            + {p.name}
-          </button>
-        ))}
-        <button className="addon manage" onClick={() => setManaging((m) => !m)} aria-expanded={managing}>
-          ⚙ Apps
-        </button>
-      </div>
+      {locked && visible.length === 0 && <div className="panel muted">No earnings saved for this day.</div>}
 
-      {managing && (
+      {!locked && (
+        <div className="addons">
+          {hidden.map((p) => (
+            <button
+              key={p.id}
+              className="addon"
+              style={{ background: p.bg, color: p.fg }}
+              onClick={() => {
+                setAdded((a) => [...a, p.id]);
+                setEditing(p.id);
+              }}
+            >
+              + {p.name}
+            </button>
+          ))}
+          <button className="addon manage" onClick={() => setManaging((m) => !m)} aria-expanded={managing}>
+            ⚙ Apps
+          </button>
+        </div>
+      )}
+
+      {!locked && managing && (
         <div className="panel manage-panel">
           <div className="row">
             <h2 style={{ margin: 0 }}>Always show</h2>
@@ -130,6 +140,7 @@ export default function EarningsEditor({ day, onChange, confirmLabel }: Props) {
 function PlatformCard({
   platform: p,
   entry,
+  locked,
   editing,
   onEdit,
   onDone,
@@ -137,6 +148,7 @@ function PlatformCard({
 }: {
   platform: Platform;
   entry?: Entry;
+  locked: boolean;
   editing: boolean;
   onEdit: () => void;
   onDone: () => void;
@@ -157,6 +169,18 @@ function PlatformCard({
   }, [editing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const style = { background: p.bg, color: p.fg };
+
+  if (locked) {
+    return (
+      <div className="pcard locked" style={style}>
+        <div>
+          <div className="pname">{p.name}</div>
+          <div className="pmeta">{entry ? `Updated ${fmtTime(entry.updated_at)}` : ""}</div>
+        </div>
+        <div className="pamt">{entry ? fmtMoney(entry.amount_pence) : "£ —"}</div>
+      </div>
+    );
+  }
 
   // A saved £0 gets its own Remove button, which clears the entry (and puts a
   // non-pinned app back behind its "+" button).
