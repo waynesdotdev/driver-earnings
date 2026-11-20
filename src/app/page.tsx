@@ -6,6 +6,7 @@ import EarningsEditor from "@/components/EarningsEditor";
 import { WeekBars } from "@/components/Summary";
 import { HideableAmount, Section } from "@/components/Section";
 import HoldButton from "@/components/HoldButton";
+import WeekTarget from "@/components/WeekTarget";
 import { api } from "@/lib/api";
 import { addDays, fmtDay, fmtDayLong, mondayOf, todayLocal } from "@/lib/dates";
 import { fmtMoney } from "@/lib/money";
@@ -93,6 +94,8 @@ export default function TodayPage() {
     setWeek((w) => [...w.filter((d) => d.date !== day.date), day]);
   }
 
+  const weekTotal = week.reduce((s, d) => s + dayTotal(d), 0);
+
   return (
     <main className={`app ${mode === "active" ? "has-finish" : ""}`}>
       {mode === "loading" && <div className="loading">Loading…</div>}
@@ -134,12 +137,16 @@ export default function TodayPage() {
             </HideableAmount>
           </header>
 
+          <WeekTarget show="prompt" monday={mondayOf(active.date)} earned={weekTotal} refDate={active.date} />
+
           <EarningsEditor day={active} onChange={onDayChange} />
+
+          <WeekTarget show="panel" withPrompt monday={mondayOf(active.date)} earned={weekTotal} refDate={active.date} />
 
           <Section
             id="today-week"
             title="This week (Mon–Sun)"
-            summary={<span style={{ fontWeight: 900, fontSize: 20 }}>{fmtMoney(week.reduce((s, d) => s + dayTotal(d), 0))}</span>}
+            summary={<span style={{ fontWeight: 900, fontSize: 20 }}>{fmtMoney(weekTotal)}</span>}
           >
             <WeekBars monday={mondayOf(active.date)} days={week} current={active.date} />
           </Section>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Nav from "@/components/Nav";
 import { DayList, PlatformSplit } from "@/components/Summary";
 import { Section } from "@/components/Section";
+import WeekTarget from "@/components/WeekTarget";
 import { api } from "@/lib/api";
 import { addDays, fmtDay, mondayOf, todayLocal, weekDates } from "@/lib/dates";
 import { fmtMoney } from "@/lib/money";
@@ -72,6 +73,8 @@ export default function WeekPage() {
               </div>
             </div>
           </Section>
+
+          <WeekTarget show="panel" monday={monday} earned={total} refDate={todayLocal()} />
 
           <Section id="week-by-app" title="By app">
             <PlatformSplit days={days} />

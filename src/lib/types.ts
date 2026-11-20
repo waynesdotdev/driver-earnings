@@ -19,6 +19,11 @@ export interface MonthSummary {
   days: number;
 }
 
+export interface WeekTarget {
+  /** null = not set for this week yet */
+  target_pence: number | null;
+}
+
 export function dayTotal(day: Pick<Day, "earnings"> | undefined): number {
   if (!day) return 0;
   return Object.values(day.earnings).reduce((s, e) => s + (e?.amount_pence ?? 0), 0);

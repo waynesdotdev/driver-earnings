@@ -103,6 +103,25 @@ export async function getRange(from: string, to: string): Promise<Day[]> {
   return assemble((d.results ?? []) as unknown as DayRow[], (e.results ?? []) as unknown as EarnRow[]);
 }
 
+/** The target for the week starting `monday` (null if not set yet). */
+export async function getTarget(monday: string): Promise<{ target_pence: number | null }> {
+  const DB = await db();
+  const row = await DB.prepare("SELECT target_pence FROM week_targets WHERE monday = ?")
+    .bind(monday)
+    .first<{ target_pence: number }>();
+  return { target_pence: row?.target_pence ?? null };
+}
+
+export async function setTarget(monday: string, pence: number): Promise<void> {
+  const DB = await db();
+  await DB.prepare(
+    `INSERT INTO week_targets (monday, target_pence, updated_at) VALUES (?, ?, ?)
+     ON CONFLICT(monday) DO UPDATE SET target_pence = excluded.target_pence, updated_at = excluded.updated_at`
+  )
+    .bind(monday, pence, now())
+    .run();
+}
+
 export async function getMonths(): Promise<MonthSummary[]> {
   const DB = await db();
   const { results } = await DB.prepare(
