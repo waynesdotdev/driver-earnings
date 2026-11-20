@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { DEFAULT_PINNED, SWATCHES, customPlatform, type Platform, type PlatformId } from "@/lib/platforms";
 import { usePlatforms, setCustomPlatforms } from "@/lib/usePlatforms";
-import { fmtMoney, parseMoney, penceToInput } from "@/lib/money";
+import { checkMoney, fmtMoney, penceToInput } from "@/lib/money";
 import { fmtTime } from "@/lib/dates";
 import { api } from "@/lib/api";
 import type { Day, Entry } from "@/lib/types";
@@ -420,11 +420,15 @@ function PlatformCard({
   }
 
   async function save() {
-    const trimmed = value.trim();
-    const pence = trimmed === "" ? null : parseMoney(trimmed);
-    if (trimmed !== "" && pence === null) {
-      setErr("Enter an amount like 110.22");
-      return;
+    // empty = clear this app for the day; otherwise it must be a valid amount
+    let pence: number | null = null;
+    if (value.trim() !== "") {
+      const r = checkMoney(value);
+      if (!r.ok) {
+        setErr(r.error);
+        return;
+      }
+      pence = r.pence;
     }
     setSaving(true);
     setErr(null);

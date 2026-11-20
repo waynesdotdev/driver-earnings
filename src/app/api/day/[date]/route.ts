@@ -3,6 +3,7 @@ import { withAuth } from "@/lib/auth";
 import { customPlatformExists, getDay, setEarning } from "@/lib/db";
 import { isDateStr } from "@/lib/dates";
 import { isBuiltin } from "@/lib/platforms";
+import { isValidPence } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +24,9 @@ export const PUT = withAuth(async (req: Request, { params }: Ctx) => {
     return NextResponse.json({ error: "bad platform" }, { status: 400 });
   }
   const amt = body?.amount_pence;
-  if (amt !== null && (typeof amt !== "number" || !Number.isInteger(amt) || amt < 0 || amt > 10_000_000)) {
-    return NextResponse.json({ error: "bad amount" }, { status: 400 });
+  // null clears the app for the day; otherwise whole pence, never negative
+  if (amt !== null && !isValidPence(amt)) {
+    return NextResponse.json({ error: "Amounts must be £0 or more (up to £100,000)" }, { status: 400 });
   }
   return NextResponse.json({ day: await setEarning(date, platform, amt as number | null) });
 });

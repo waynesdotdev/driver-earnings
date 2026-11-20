@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { addDays, fmtDay, weekDates } from "@/lib/dates";
-import { fmtMoney, parseMoney } from "@/lib/money";
+import { MAX_TARGET_PENCE, checkMoney, fmtMoney } from "@/lib/money";
 import { Section } from "./Section";
 
 // Example amounts that drift through the empty box. Never pre-filled.
@@ -186,11 +186,12 @@ function TargetForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const pence = parseMoney(value);
-    if (pence === null || pence <= 0) {
-      setErr("Enter an amount like 700");
+    const r = checkMoney(value, MAX_TARGET_PENCE);
+    if (!r.ok || r.pence <= 0) {
+      setErr(r.ok ? "Your target needs to be more than £0" : r.error);
       return;
     }
+    const pence = r.pence;
     setSaving(true);
     setErr(null);
     try {

@@ -2,6 +2,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { Day, Entry, MonthSummary } from "./types";
 import type { PlatformId } from "./platforms";
 import { ensureSchema } from "./schema";
+import { MAX_TARGET_PENCE, isValidPence } from "./money";
 
 async function db(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true });
@@ -92,6 +93,7 @@ export async function closeDay(date: string): Promise<Day> {
 
 /** Replaces (not adds to) the running figure for one app. null clears it. */
 export async function setEarning(date: string, platform: PlatformId, pence: number | null): Promise<Day> {
+  if (pence !== null && !isValidPence(pence)) throw new Error("Amounts can't be negative");
   const DB = await db();
   const t = now();
   const ensureDay = DB.prepare(
@@ -200,6 +202,7 @@ export async function getTargets(from: string, to: string): Promise<{ monday: st
 }
 
 export async function setTarget(monday: string, pence: number): Promise<void> {
+  if (!isValidPence(pence, MAX_TARGET_PENCE) || pence === 0) throw new Error("Target must be more than £0");
   const DB = await db();
   await DB.prepare(
     `INSERT INTO week_targets (monday, target_pence, updated_at) VALUES (?, ?, ?)

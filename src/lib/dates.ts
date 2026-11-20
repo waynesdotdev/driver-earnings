@@ -3,8 +3,12 @@
 
 export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/** A real calendar date as "YYYY-MM-DD" (rejects things like 2026-02-30 or 2026-13-01). */
 export function isDateStr(s: unknown): s is string {
-  return typeof s === "string" && DATE_RE.test(s);
+  if (typeof s !== "string" || !DATE_RE.test(s)) return false;
+  const [y, m, d] = s.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return y >= 2000 && y <= 2100 && dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
 
 /** The phone's current calendar date (local time). */
