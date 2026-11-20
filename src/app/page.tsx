@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Nav from "@/components/Nav";
 import EarningsEditor from "@/components/EarningsEditor";
 import { WeekBars } from "@/components/Summary";
+import { HideableAmount, Section } from "@/components/Section";
+import HoldButton from "@/components/HoldButton";
 import { api } from "@/lib/api";
 import { addDays, fmtDay, fmtDayLong, mondayOf, todayLocal } from "@/lib/dates";
 import { fmtMoney } from "@/lib/money";
@@ -71,14 +73,16 @@ export default function TodayPage() {
   }
 
   async function finish() {
+    // Press-and-hold on the button is the confirmation, so no pop-up here.
     if (!active) return;
-    if (!window.confirm(`Finish ${fmtDay(active.date)}?\n\nTotal ${fmtMoney(dayTotal(active))} will be saved to your history.`)) return;
     setBusy(true);
     try {
       const { day } = await api.close(active.date);
       setFinished(day);
       setActive(null);
       setMode("finished");
+    } catch (e) {
+      window.alert(`Couldn't finish the day: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setBusy(false);
     }
@@ -90,7 +94,7 @@ export default function TodayPage() {
   }
 
   return (
-    <main className="app">
+    <main className={`app ${mode === "active" ? "has-finish" : ""}`}>
       {mode === "loading" && <div className="loading">Loading…</div>}
 
       {mode === "error" && (
@@ -125,26 +129,25 @@ export default function TodayPage() {
               <div className="date">{fmtDay(active.date)}</div>
               {active.date !== today && <span className="chip night">🌙 Still on {fmtDay(active.date)} · calendar says {fmtDay(today)}</span>}
             </div>
-            <div className="total">
-              <div className="label">Today</div>
-              <div className="num">{fmtMoney(dayTotal(active))}</div>
-            </div>
+            <HideableAmount id="today-total" label="Today">
+              {fmtMoney(dayTotal(active))}
+            </HideableAmount>
           </header>
 
           <EarningsEditor day={active} onChange={onDayChange} />
 
-          <section className="panel">
-            <div className="row">
-              <h2 style={{ margin: 0 }}>This week (Mon–Sun)</h2>
-              <div style={{ fontWeight: 900, fontSize: 20 }}>{fmtMoney(week.reduce((s, d) => s + dayTotal(d), 0))}</div>
-            </div>
+          <Section
+            id="today-week"
+            title="This week (Mon–Sun)"
+            summary={<span style={{ fontWeight: 900, fontSize: 20 }}>{fmtMoney(week.reduce((s, d) => s + dayTotal(d), 0))}</span>}
+          >
             <WeekBars monday={mondayOf(active.date)} days={week} current={active.date} />
-          </section>
+          </Section>
 
-          <div style={{ marginTop: 14 }}>
-            <button className="btn danger" onClick={finish} disabled={busy}>
-              Finish day
-            </button>
+          <div className="finish-bar">
+            <HoldButton className="btn danger" onHold={finish} disabled={busy}>
+              Hold to finish day
+            </HoldButton>
           </div>
         </>
       )}

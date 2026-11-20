@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Nav from "@/components/Nav";
 import { DayList, PlatformSplit } from "@/components/Summary";
+import { HideableAmount } from "@/components/Section";
 import { api } from "@/lib/api";
 import { fmtMonth, monthRange } from "@/lib/dates";
 import { fmtMoney } from "@/lib/money";
@@ -34,10 +35,9 @@ export default function HistoryPage() {
           <div className="label">History</div>
           <div className="date">All earnings</div>
         </div>
-        <div className="total">
-          <div className="label">All time · {allDays} days</div>
-          <div className="num">{fmtMoney(allTime)}</div>
-        </div>
+        <HideableAmount id="history-total" label={`All time · ${allDays} days`}>
+          {fmtMoney(allTime)}
+        </HideableAmount>
       </header>
 
       {!months ? (

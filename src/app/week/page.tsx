@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Nav from "@/components/Nav";
 import { DayList, PlatformSplit } from "@/components/Summary";
+import { Section } from "@/components/Section";
 import { api } from "@/lib/api";
 import { addDays, fmtDay, mondayOf, todayLocal, weekDates } from "@/lib/dates";
 import { fmtMoney } from "@/lib/money";
@@ -57,10 +58,9 @@ export default function WeekPage() {
         <div className="loading">Loading…</div>
       ) : (
         <>
-          <section className="panel">
+          <Section id="week-total" title="Week total">
             <div className="row">
               <div>
-                <h2>Week total</h2>
                 <div className="big good">{fmtMoney(total)}</div>
               </div>
               <div style={{ textAlign: "right" }}>
@@ -71,17 +71,15 @@ export default function WeekPage() {
                 </div>
               </div>
             </div>
-          </section>
+          </Section>
 
-          <section className="panel">
-            <h2>By app</h2>
+          <Section id="week-by-app" title="By app">
             <PlatformSplit days={days} />
-          </section>
+          </Section>
 
-          <section className="panel">
-            <h2>Days</h2>
+          <Section id="week-days" title="Days">
             <DayList dates={weekDates(monday)} days={days} activeDate={activeDate} />
-          </section>
+          </Section>
         </>
       )}
       <Nav />

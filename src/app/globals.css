@@ -568,3 +568,84 @@ a {
   text-align: center;
   color: var(--muted);
 }
+
+/* ---------- Collapsible sections ---------- */
+.section-head {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  text-align: left;
+  min-height: 32px;
+}
+.section-head h2 {
+  margin: 0;
+}
+.section-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.chev {
+  color: var(--muted);
+  font-size: 14px;
+}
+.section-body {
+  margin-top: 10px;
+}
+.panel.section.closed {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.total.hideable {
+  padding: 0;
+  text-align: right;
+}
+.head .total .num.hidden {
+  color: var(--muted);
+}
+
+/* ---------- Finish day: pinned above the nav, press and hold ---------- */
+.finish-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  z-index: 9;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}
+.app.has-finish {
+  padding-bottom: calc(var(--nav-h) + 90px + env(safe-area-inset-bottom));
+}
+.hold-btn {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+.finish-bar .btn.danger {
+  background: var(--panel);
+}
+.hold-fill {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: var(--danger);
+  opacity: 0.35;
+  transition: width 0.15s ease-out;
+}
+.hold-btn.holding .hold-fill {
+  width: 100%;
+  transition: width var(--hold-ms, 1200ms) linear;
+}
+.hold-label {
+  position: relative;
+}
